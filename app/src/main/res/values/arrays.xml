@@ -1,0 +1,7 @@
+<resources>
+    <string-array name="city">
+        <item>Seoul</item>
+        <item>Busan</item>
+        <item>Suwon</item>
+    </string-array>
+</resources>
