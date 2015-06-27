@@ -31,6 +31,7 @@ public class MainActivity extends ActionBarActivity {
     private String data;
     private LocationManager locationmanager = null;
     private String selectcity;
+    StringBuilder buffer=new StringBuilder();
     TextView lmtv=null;
     TextView rtv=null;
 
@@ -42,7 +43,7 @@ public class MainActivity extends ActionBarActivity {
         Spinner spin = (Spinner) findViewById(R.id.spinner);
         Button button = (Button) findViewById(R.id.resultbutton);
         lmtv = (TextView) findViewById(R.id.lmtv);
-        rtv = (TextView) findViewById(R.id.resultView);
+        rtv = (TextView) findViewById(R.id.rtv);
         locationmanager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 
         button.setOnClickListener(new View.OnClickListener() {
@@ -86,11 +87,10 @@ public class MainActivity extends ActionBarActivity {
     }//onCreate
 
     String getXmlData(){
-        StringBuilder buffer=new StringBuilder();
 
         String queryUrl="http://api.openweathermap.org/data/2.5/weather?q="   //요청 URL
                 + selectcity                        //spinner에서 select된 city
-                +"&mode=xml";
+                +"&units=metric&mode=xml";
 
         try {
             URL url= new URL(queryUrl); //문자열로 된 요청 url을 URL 객체로 생성.
@@ -119,7 +119,7 @@ public class MainActivity extends ActionBarActivity {
                                 buffer.append("\n");
                                 break;
                             case "temperature":
-                                buffer.append("절대온도 : ");
+                                buffer.append("온도 : ");
                                 xpp.next();
                                 buffer.append(xpp.getAttributeValue(null, "value"));
                                 buffer.append("\n");
@@ -135,10 +135,11 @@ public class MainActivity extends ActionBarActivity {
                                 buffer.append("기압 :");
                                 xpp.next();
                                 buffer.append(xpp.getAttributeValue(null, "value"));
+                                buffer.append("hpa");
                                 buffer.append("\n");
                                 break;
                             case "clouds":
-                                buffer.append("구름 :");
+                                buffer.append("날씨 :");
                                 xpp.next();
                                 buffer.append(xpp.getAttributeValue(null, "name"));
                                 buffer.append("\n");
@@ -180,7 +181,79 @@ public class MainActivity extends ActionBarActivity {
             double lng = location.getLongitude();
 
             String address = getAddress(lat,lng);
-            lmtv.setText(address);
+            lmtv.setText("현재위치 : " + address);
+
+            String sUrl="http://api.openweathermap.org/data/2.5/weather?lat="
+             + lat + "&lon=" + lng + "&units=metric&mode=xml";
+
+            try {
+                URL url= new URL(sUrl); //문자열로 된 요청 url을 URL 객체로 생성.
+                InputStream is= url.openStream();  //url위치로 입력스트림 연결
+
+                XmlPullParserFactory factory= XmlPullParserFactory.newInstance();
+                XmlPullParser xpp= factory.newPullParser();
+                xpp.setInput( new InputStreamReader(is, "UTF-8") );  //inputstream 으로부터 xml 입력받기
+
+                String tag;
+                xpp.next();
+                int eventType= xpp.getEventType();
+
+                while( eventType != XmlPullParser.END_DOCUMENT ){
+                    switch( eventType ){
+                        case XmlPullParser.START_DOCUMENT:
+                            buffer.append("start Weather XML parsing...\n\n");
+                            break;
+                        case XmlPullParser.START_TAG:
+                            tag= xpp.getName();    //테그 이름 얻어오기
+                            switch (tag) {
+                                case "city":
+                                    buffer.append("도시명 : ");
+                                    xpp.next();
+                                    buffer.append(selectcity);
+                                    buffer.append("\n");
+                                    break;
+                                case "temperature":
+                                    buffer.append("온도 : ");
+                                    xpp.next();
+                                    buffer.append(xpp.getAttributeValue(null, "value"));
+                                    buffer.append("\n");
+                                    break;
+                                case "humidity":
+                                    buffer.append("습도 :");
+                                    xpp.next();
+                                    buffer.append(xpp.getAttributeValue(null, "value"));
+                                    buffer.append("%");
+                                    buffer.append("\n");
+                                    break;
+                                case "pressure":
+                                    buffer.append("기압 :");
+                                    xpp.next();
+                                    buffer.append(xpp.getAttributeValue(null, "value"));
+                                    buffer.append("hpa");
+                                    buffer.append("\n");
+                                    break;
+                                case "clouds":
+                                    buffer.append("날씨 :");
+                                    xpp.next();
+                                    buffer.append(xpp.getAttributeValue(null, "name"));
+                                    buffer.append("\n");
+                                    break;
+                            }
+                            break;
+                        case XmlPullParser.TEXT:
+                            break;
+                        case XmlPullParser.END_TAG:
+                            tag= xpp.getName();    //테그 이름 얻어오기
+                            if(tag.equals("item")) buffer.append("\n"); // 첫번째 검색결과종료..줄바꿈
+                            break;
+                    }
+
+                    eventType= xpp.next();
+                }
+            }catch (Exception e) {
+                e.printStackTrace();
+            }
+            rtv.setText(sUrl);
         }
 
         @Override
@@ -204,7 +277,8 @@ public class MainActivity extends ActionBarActivity {
         String address = null;
 
         //위치정보를 활용하기 위한 구글 API 객체
-        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault()); //설정값(폰에서 한국이면 한글로)
+        //Geocoder geocoder = new Geocoder(this, Locale.ENGLISH);
 
         //주소 목록을 담기 위한 HashMap
         List<Address> list = null;
@@ -222,11 +296,10 @@ public class MainActivity extends ActionBarActivity {
 
         if(list.size() > 0){
             Address addr = list.get(0);
-            address = addr.getCountryName() + " "
-                    + addr.getPostalCode() + " "
-                    + addr.getLocality() + " "
-                    + addr.getThoroughfare() + " "
-                    + addr.getFeatureName();
+            address = addr.getCountryName() + " " //국가
+                    + addr.getLocality() + " " //도시
+                    + addr.getThoroughfare() + " "; //동
+                    //+ addr.getFeatureName(); //번지
         }
 
         return address;

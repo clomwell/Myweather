@@ -45,23 +45,21 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/linearLayout">
 
-         <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/scrollView"  >
+
 
             <TextView
-                android:background="#ff0000"
+                android:background="#00ff00"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="위치확인"
                 android:id="@+id/lmtv" />
 
-            </ScrollView>
+
         <TextView
-            android:background="#ff00ff"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/resultView" />
+        android:background="#ff00ff"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/rtv" />
 
     </LinearLayout>
 
